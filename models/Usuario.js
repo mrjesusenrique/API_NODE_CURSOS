@@ -25,6 +25,7 @@ const usuarioSchema = mongoose.Schema({
   estado: {
     type: Boolean,
     default: true,
+    required: false,
   },
   imagen: {
     type: String,
