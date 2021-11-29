@@ -15,6 +15,13 @@ const usuarioSchema = mongoose.Schema({
     minlength: 2,
     maxlength: 99,
   },
+  apellido: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 2,
+    maxlength: 99,
+  },
   password: {
     type: String,
     required: true,
@@ -25,7 +32,7 @@ const usuarioSchema = mongoose.Schema({
   estado: {
     type: Boolean,
     default: true,
-    required: false,
+    required: true,
   },
   imagen: {
     type: String,
