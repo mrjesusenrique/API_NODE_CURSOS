@@ -3,9 +3,21 @@
 const express = require("express");
 const router = express.Router();
 const Usuario = require("../models/Usuario");
+const Joi = require("joi");
+
+const validateSchema = Joi.object({
+  nombre: Joi.string().min(2).max(99).required(),
+  apellido: Joi.string().min(2).max(99).required(),
+  email: Joi.string().email({
+    minDomainSegments: 2,
+    tlds: { allow: ["com", "net", "org"] },
+  }),
+  password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")),
+  estado: Joi.boolean().default(true),
+});
 
 router.get("/", async (req, resp) => {
-  let usuarios = await Usuario.find();
+  const usuarios = await Usuario.find();
 
   !usuarios
     ? resp.status(404).send({
@@ -20,8 +32,8 @@ router.get("/", async (req, resp) => {
 });
 
 router.get("/:id", async (req, resp) => {
-  let id = req.params.id;
-  let usuario = await Usuario.findById(id);
+  const id = req.params.id;
+  const usuario = await Usuario.findById(id);
 
   !usuario.estado === true
     ? resp.status(404).send({
@@ -37,22 +49,37 @@ router.get("/:id", async (req, resp) => {
 });
 
 router.post("/", async (req, resp) => {
-  let usuario = new Usuario({
-    email: req.body.email,
+  const { error, value } = validateSchema.validate({
     nombre: req.body.nombre,
     apellido: req.body.apellido,
+    email: req.body.email,
     password: req.body.password,
   });
 
-  try {
-    await usuario.save();
-
-    resp.status(200).send({
-      status: "success",
-      message: "Usuario guardado de manera exitosa",
-      usuario,
+  if (!error) {
+    const usuario = new Usuario({
+      email: req.body.email,
+      nombre: req.body.nombre,
+      apellido: req.body.apellido,
+      password: req.body.password,
     });
-  } catch (error) {
+
+    try {
+      await usuario.save();
+
+      resp.status(200).send({
+        status: "success",
+        message: "Usuario guardado de manera exitosa",
+        usuario,
+        value
+      });
+    } catch (err) {
+      resp.status(400).send({
+        status: "error",
+        message: `Error al crear el usuario (err): ${err}`,
+      });
+    }
+  } else {
     resp.status(400).send({
       status: "error",
       message: `Error al crear el usuario: ${error}`,
@@ -61,34 +88,49 @@ router.post("/", async (req, resp) => {
 });
 
 router.put("/:id", async (req, resp) => {
-  let id = req.params.id;
+  const id = req.params.id;
 
-  let usuario = await Usuario.findByIdAndUpdate(
-    id,
-    {
-      email: req.body.email,
-      nombre: req.body.nombre,
-      apellido: req.body.apellido,
-      password: req.body.password,
-    },
-    { new: true }
-  );
+  const { error, value } = validateSchema.validate({
+    nombre: req.body.nombre,
+    apellido: req.body.apellido,
+    email: req.body.email,
+    password: req.body.password,
+  });
 
-  usuario
-    ? resp.status(200).send({
-        status: "success",
-        message: "Usuario actualizado de manera exitosa",
-        usuario,
-      })
-    : resp.status(404).send({
-        status: "error",
-        message: `Error al actualizar el usuario. No existe usuario registrado con el ID proporcionado`,
-      });
+  if (!error) {
+    const usuario = await Usuario.findByIdAndUpdate(
+      id,
+      {
+        email: req.body.email,
+        nombre: req.body.nombre,
+        apellido: req.body.apellido,
+        password: req.body.password,
+      },
+      { new: true }
+    );
+
+    usuario
+      ? resp.status(200).send({
+          status: "success",
+          message: "Usuario actualizado de manera exitosa",
+          usuario,
+          value
+        })
+      : resp.status(404).send({
+          status: "error",
+          message: `Error al actualizar el usuario. No existe usuario registrado con el ID proporcionado`,
+        });
+  } else {
+    resp.status(404).send({
+      status: "error",
+      message: `Error al actualizar el usuario: ${error}`,
+    });
+  }
 });
 
 router.delete("/:id", async (req, resp) => {
-  let id = req.params.id;
-  let usuario = await Usuario.findByIdAndDelete(id);
+  const id = req.params.id;
+  const usuario = await Usuario.findByIdAndDelete(id);
 
   !usuario
     ? resp.status(400).send({

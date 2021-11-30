@@ -32,7 +32,7 @@ const usuarioSchema = mongoose.Schema({
   estado: {
     type: Boolean,
     default: true,
-    required: true,
+    required: false,
   },
   imagen: {
     type: String,
