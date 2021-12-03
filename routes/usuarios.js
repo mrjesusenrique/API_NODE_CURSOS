@@ -4,6 +4,7 @@ const express = require("express");
 const router = express.Router();
 const Usuario = require("../models/Usuario");
 const Joi = require("joi");
+const bcrypt = require("bcrypt");
 
 const validateSchema = Joi.object({
   nombre: Joi.string().min(2).max(99).required(),
@@ -68,6 +69,10 @@ router.post("/", async (req, resp) => {
       message: "El email ingresado ya está registrado en la Base de Datos",
     });
   } else {
+    const plainTextPassword = req.body.password;
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(plainTextPassword, salt);
+
     const { error } = validateSchema.validate({
       nombre: req.body.nombre,
       apellido: req.body.apellido,
@@ -80,7 +85,7 @@ router.post("/", async (req, resp) => {
         email: req.body.email,
         nombre: req.body.nombre,
         apellido: req.body.apellido,
-        password: req.body.password,
+        password: hashPassword,
       });
 
       try {
