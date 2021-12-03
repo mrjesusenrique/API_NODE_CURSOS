@@ -17,7 +17,12 @@ const validateSchema = Joi.object({
 });
 
 router.get("/", async (req, resp) => {
-  const usuarios = await Usuario.find();
+  const usuarios = await Usuario.find().select({
+    nombre: 1,
+    apellido: 1,
+    email: 1,
+    estado: 1,
+  });
 
   !usuarios
     ? resp.status(404).send({
@@ -33,7 +38,12 @@ router.get("/", async (req, resp) => {
 
 router.get("/:id", async (req, resp) => {
   const id = req.params.id;
-  const usuario = await Usuario.findById(id);
+  const usuario = await Usuario.findById(id).select({
+    nombre: 1,
+    apellido: 1,
+    email: 1,
+    estado: 1,
+  });
 
   !usuario.estado === true
     ? resp.status(404).send({
@@ -49,82 +59,110 @@ router.get("/:id", async (req, resp) => {
 });
 
 router.post("/", async (req, resp) => {
-  const { error, value } = validateSchema.validate({
-    nombre: req.body.nombre,
-    apellido: req.body.apellido,
-    email: req.body.email,
-    password: req.body.password,
-  });
+  const newEmail = req.body.email;
+  const userEmail = await Usuario.findOne({ email: newEmail });
 
-  if (!error) {
-    const usuario = new Usuario({
-      email: req.body.email,
+  if (userEmail) {
+    resp.status(400).send({
+      status: "error",
+      message: "El email ingresado ya está registrado en la Base de Datos",
+    });
+  } else {
+    const { error } = validateSchema.validate({
       nombre: req.body.nombre,
       apellido: req.body.apellido,
+      email: req.body.email,
       password: req.body.password,
     });
 
-    try {
-      await usuario.save();
-
-      resp.status(200).send({
-        status: "success",
-        message: "Usuario guardado de manera exitosa",
-        usuario,
-        value
+    if (!error) {
+      const usuario = new Usuario({
+        email: req.body.email,
+        nombre: req.body.nombre,
+        apellido: req.body.apellido,
+        password: req.body.password,
       });
-    } catch (err) {
+
+      try {
+        await usuario.save();
+
+        resp.status(200).send({
+          status: "success",
+          message: "Usuario guardado de manera exitosa",
+          usuario: {
+            id: usuario.id,
+            nombre: usuario.nombre,
+            apellido: usuario.apellido,
+            email: usuario.email,
+          },
+        });
+      } catch (err) {
+        resp.status(400).send({
+          status: "error",
+          message: `Error al crear el usuario (err): ${err}`,
+        });
+      }
+    } else {
       resp.status(400).send({
         status: "error",
-        message: `Error al crear el usuario (err): ${err}`,
+        message: `Error al crear el usuario: ${error}`,
       });
     }
-  } else {
-    resp.status(400).send({
-      status: "error",
-      message: `Error al crear el usuario: ${error}`,
-    });
   }
 });
 
 router.put("/:id", async (req, resp) => {
   const id = req.params.id;
+  const newEmail = req.body.email;
+  const userEmail = await Usuario.findOne({ email: newEmail });
 
-  const { error, value } = validateSchema.validate({
-    nombre: req.body.nombre,
-    apellido: req.body.apellido,
-    email: req.body.email,
-    password: req.body.password,
-  });
-
-  if (!error) {
-    const usuario = await Usuario.findByIdAndUpdate(
-      id,
-      {
-        email: req.body.email,
-        nombre: req.body.nombre,
-        apellido: req.body.apellido,
-        password: req.body.password,
-      },
-      { new: true }
-    );
-
-    usuario
-      ? resp.status(200).send({
-          status: "success",
-          message: "Usuario actualizado de manera exitosa",
-          usuario,
-          value
-        })
-      : resp.status(404).send({
-          status: "error",
-          message: `Error al actualizar el usuario. No existe usuario registrado con el ID proporcionado`,
-        });
-  } else {
-    resp.status(404).send({
+  if (userEmail) {
+    resp.status(400).send({
       status: "error",
-      message: `Error al actualizar el usuario: ${error}`,
+      message:
+        "Error al actualizar el usuario. El email ingresado ya está registrado en la Base de Datos",
     });
+  } else {
+    const { error } = validateSchema.validate({
+      nombre: req.body.nombre,
+      apellido: req.body.apellido,
+      email: req.body.email,
+      password: req.body.password,
+    });
+
+    if (!error) {
+      const usuario = await Usuario.findByIdAndUpdate(
+        id,
+        {
+          email: req.body.email,
+          nombre: req.body.nombre,
+          apellido: req.body.apellido,
+          password: req.body.password,
+        },
+        { new: true }
+      );
+
+      usuario
+        ? resp.status(200).send({
+            status: "success",
+            message: "Usuario actualizado de manera exitosa",
+            usuario: {
+              id: usuario.id,
+              nombre: usuario.nombre,
+              apellido: usuario.apellido,
+              email: usuario.email,
+            },
+          })
+        : resp.status(404).send({
+            status: "error",
+            message: `Error al actualizar el usuario. No existe usuario registrado con el ID proporcionado`,
+          });
+    } else {
+      resp.status(404).send({
+        status: "error",
+        message: `Error al actualizar el usuario: ${error}`,
+      });
+    }
   }
 });
 
@@ -140,7 +178,11 @@ router.delete("/:id", async (req, resp) => {
     : resp.status(200).send({
         status: "success",
         message: "Usuario eliminado de manera exitosa",
-        usuario,
+        usuario: {
+          nombre: usuario.nombre,
+          apellido: usuario.apellido,
+          email: usuario.email,
+        },
       });
 });
 
