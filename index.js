@@ -6,11 +6,13 @@ const app = express();
 const port = process.env.PORT || 3000;
 const usuarios = require("./routes/usuarios");
 const cursos = require("./routes/cursos");
+const auth = require("./routes/auth");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/usuarios", usuarios);
 app.use("/api/cursos", cursos);
+app.use("/api/auth", auth);
 
 app.listen(port, () => {
   console.log(`API Rest escuchando en el puerto ${port}`);
