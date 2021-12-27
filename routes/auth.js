@@ -4,6 +4,7 @@ const express = require("express");
 const router = express.Router();
 const Usuario = require("../models/Usuario");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 router.post("/", async (req, resp) => {
   const email = req.body.email;
@@ -16,16 +17,30 @@ router.post("/", async (req, resp) => {
         password,
         validUser.password
       );
-      validPassword
-        ? resp.status(200).send({
-            status: "success",
-            message: "Login correcto",
-            validUser,
-          })
-        : resp.status(400).send({
-            status: "error",
-            message: "Email o password incorrecto",
-          });
+      if (validPassword) {
+        const jwToken = jwt.sign(
+          {
+            data: {
+              _id: validUser._id,
+              nombre: validUser.nombre,
+              email: validUser.email,
+            },
+          },
+          "secret",
+          { expiresIn: "24h" }
+        );
+        resp.status(200).send({
+          status: "success",
+          message: "Login correcto",
+          validUser,
+          jwToken,
+        });
+      } else {
+        resp.status(400).send({
+          status: "error",
+          message: "Email o password incorrecto",
+        });
+      }
     } else {
       resp.status(400).send({
         status: "error",
