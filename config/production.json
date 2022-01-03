@@ -1,0 +1,8 @@
+{
+  "nombre": "API Rest Node.js | Express.js | MongoDB - Usuarios y Cursos",
+  "configDB": {},
+  "configToken": {
+    "SEED": "secret",
+    "expiration": "24h"
+  }
+}

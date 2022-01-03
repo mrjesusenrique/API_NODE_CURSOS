@@ -5,6 +5,9 @@ const router = express.Router();
 const Usuario = require("../models/Usuario");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const config = require("config");
+const secretToken = config.get("configToken.SEED");
+const expirationToken = config.get("configToken.expiration");
 
 router.post("/", async (req, resp) => {
   const email = req.body.email;
@@ -26,8 +29,8 @@ router.post("/", async (req, resp) => {
               email: validUser.email,
             },
           },
-          "secret",
-          { expiresIn: "24h" }
+          secretToken,
+          { expiresIn: expirationToken }
         );
         resp.status(200).send({
           status: "success",

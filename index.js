@@ -7,6 +7,8 @@ const port = process.env.PORT || 3000;
 const usuarios = require("./routes/usuarios");
 const cursos = require("./routes/cursos");
 const auth = require("./routes/auth");
+const config = require("config");
+const HOST = config.get("configDB.HOST");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -19,7 +21,7 @@ app.listen(port, () => {
 });
 
 mongoose
-  .connect("mongodb://127.0.0.1:27017/API_NODE_CURSOS", {
+  .connect(HOST, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
