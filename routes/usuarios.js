@@ -5,6 +5,7 @@ const router = express.Router();
 const Usuario = require("../models/Usuario");
 const Joi = require("joi");
 const bcrypt = require("bcrypt");
+const verificarToken = require("../middlewares/auth");
 
 const validateSchema = Joi.object({
   nombre: Joi.string().min(2).max(99).required(),
@@ -17,7 +18,7 @@ const validateSchema = Joi.object({
   estado: Joi.boolean().default(true),
 });
 
-router.get("/", async (req, resp) => {
+router.get("/", verificarToken, async (req, resp) => {
   const usuarios = await Usuario.find().select({
     nombre: 1,
     apellido: 1,
@@ -37,7 +38,7 @@ router.get("/", async (req, resp) => {
       });
 });
 
-router.get("/:id", async (req, resp) => {
+router.get("/:id", verificarToken, async (req, resp) => {
   const id = req.params.id;
   const usuario = await Usuario.findById(id).select({
     nombre: 1,
@@ -59,7 +60,7 @@ router.get("/:id", async (req, resp) => {
       });
 });
 
-router.post("/", async (req, resp) => {
+router.post("/", verificarToken, async (req, resp) => {
   const newEmail = req.body.email;
   const userEmail = await Usuario.findOne({ email: newEmail });
 
@@ -116,7 +117,7 @@ router.post("/", async (req, resp) => {
   }
 });
 
-router.put("/:id", async (req, resp) => {
+router.put("/:id", verificarToken, async (req, resp) => {
   const id = req.params.id;
   const newEmail = req.body.email;
   const userEmail = await Usuario.findOne({ email: newEmail });
@@ -171,7 +172,7 @@ router.put("/:id", async (req, resp) => {
   }
 });
 
-router.delete("/:id", async (req, resp) => {
+router.delete("/:id", verificarToken, async (req, resp) => {
   const id = req.params.id;
   const usuario = await Usuario.findByIdAndDelete(id);
 

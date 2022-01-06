@@ -4,6 +4,7 @@ const express = require("express");
 const router = express.Router();
 const Curso = require("../models/Curso");
 const Joi = require("joi");
+const verificarToken = require("../middlewares/auth");
 
 const validateSchema = Joi.object({
   titulo: Joi.string().min(2).max(99).required(),
@@ -14,7 +15,7 @@ const validateSchema = Joi.object({
   calificacion: Joi.number(),
 });
 
-router.get("/", async (req, resp) => {
+router.get("/", verificarToken, async (req, resp) => {
   const cursos = await Curso.find();
 
   !cursos
@@ -29,7 +30,7 @@ router.get("/", async (req, resp) => {
       });
 });
 
-router.get("/:id", async (req, resp) => {
+router.get("/:id", verificarToken, async (req, resp) => {
   const id = req.params.id;
   const curso = await Curso.findById(id);
 
@@ -46,7 +47,7 @@ router.get("/:id", async (req, resp) => {
       });
 });
 
-router.post("/", async (req, resp) => {
+router.post("/", verificarToken, async (req, resp) => {
   const { error, value } = validateSchema.validate({
     titulo: req.body.titulo,
     descripcion: req.body.descripcion,
@@ -89,7 +90,7 @@ router.post("/", async (req, resp) => {
   }
 });
 
-router.put("/:id", async (req, resp) => {
+router.put("/:id", verificarToken, async (req, resp) => {
   const id = req.params.id;
 
   const { error, value } = validateSchema.validate({
@@ -134,7 +135,7 @@ router.put("/:id", async (req, resp) => {
   }
 });
 
-router.delete("/:id", async (req, resp) => {
+router.delete("/:id", verificarToken, async (req, resp) => {
   const id = req.params.id;
   const curso = await Curso.findByIdAndDelete(id);
 
